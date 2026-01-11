@@ -10,7 +10,7 @@ const fn rand64(mut seed: u64) -> u64 {
     seed ^= seed << 25;
     seed ^= seed >> 27;
 
-    seed.wrapping_mul(2685821657736338717u64)
+    seed.wrapping_mul(2685821657736338717)
 }
 
 pub const ZOBRIST: Zobrist = {

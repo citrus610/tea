@@ -1,6 +1,6 @@
 use crate::chess::{piece::PieceKind, square::Square};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd)]
 #[repr(u16)]
 pub enum MoveKind {
     Normal,
@@ -12,7 +12,7 @@ pub enum MoveKind {
     PromotionQueen
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[repr(transparent)]
 pub struct Move {
     data: u16
@@ -33,9 +33,16 @@ impl MoveKind {
 
     #[inline(always)]
     pub const fn from_raw(value: u16) -> Self {
-        debug_assert!(value < Self::COUNT as u16);
-
-        unsafe { std::mem::transmute(value) }
+        match value {
+            0 => Self::Normal,
+            1 => Self::Castling,
+            2 => Self::Enpassant,
+            3 => Self::PromotionKnight,
+            4 => Self::PromotionBishop,
+            5 => Self::PromotionRook,
+            6 => Self::PromotionQueen,
+            _ => panic!("invalid index!")
+        }
     }
 
     #[inline(always)]
@@ -105,6 +112,18 @@ impl Move {
 
     #[inline(always)]
     pub fn is_promotion(self) -> bool {
-        self.kind().value() >= MoveKind::PromotionKnight.value()
+        self.kind() >= MoveKind::PromotionKnight
+    }
+}
+
+impl std::fmt::Display for Move {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}{}", self.from(), self.to())?;
+
+        if let Some(promotion_kind) = self.promotion_kind() {
+            write!(f, "{}", promotion_kind)?;
+        }
+
+        Ok(())
     }
 }

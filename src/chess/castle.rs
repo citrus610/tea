@@ -1,6 +1,6 @@
 use crate::chess::{color::Color, square::Square};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[repr(u8)]
 pub enum CastleKind {
     WhiteShort = 1,
@@ -9,7 +9,7 @@ pub enum CastleKind {
     BlackLong = 8,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[repr(transparent)]
 pub struct Castle {
     data: u8

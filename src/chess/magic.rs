@@ -1,7 +1,18 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Entry {
+include!(concat!(env!("OUT_DIR"), "/magic.rs"));
+
+use crate::chess::{bitboard::Bitboard, square::Square};
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub struct Magic {
     pub mask: u64,
     pub magic: u64,
-    pub shift: u64,
-    pub index: usize
+    pub shift: u32,
+    pub offset: usize
+}
+
+impl Magic {
+    #[inline(always)]
+    pub const fn index(self, occupied: Bitboard) -> usize {
+        (((occupied.value() & self.mask) * self.magic) >> self.shift) as usize + self.offset
+    }
 }

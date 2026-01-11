@@ -1,6 +1,6 @@
 use crate::chess::color::Color;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[repr(u8)]
 pub enum PieceKind {
     Pawn,
@@ -11,7 +11,7 @@ pub enum PieceKind {
     King
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[repr(u8)]
 pub enum Piece {
     WhitePawn,
@@ -43,9 +43,15 @@ impl PieceKind {
 
     #[inline(always)]
     pub const fn from_raw(value: u8) -> Self {
-        debug_assert!(value < Self::COUNT as u8);
-
-        unsafe { std::mem::transmute(value) }
+        match value {
+            0 => Self::Pawn,
+            1 => Self::Knight,
+            2 => Self::Bishop,
+            3 => Self::Rook,
+            4 => Self::Queen,
+            5 => Self::King,
+            _ => panic!("invalid index")
+        }
     }
 }
 
@@ -77,9 +83,21 @@ impl Piece {
 
     #[inline(always)]
     pub const fn from_raw(value: u8) -> Self {
-        debug_assert!(value < Self::COUNT as u8);
-
-        unsafe { std::mem::transmute(value) }
+        match value {
+            0 => Self::WhitePawn,
+            1 => Self::BlackPawn,
+            2 => Self::WhiteKnight,
+            3 => Self::BlackKnight,
+            4 => Self::WhiteBishop,
+            5 => Self::BlackBishop,
+            6 => Self::WhiteRook,
+            7 => Self::BlackRook,
+            8 => Self::WhiteQueen,
+            9 => Self::BlackQueen,
+            10 => Self::WhiteKing,
+            11 => Self::BlackKing,
+            _ => panic!("invalid index!")
+        }
     }
 
     #[inline(always)]

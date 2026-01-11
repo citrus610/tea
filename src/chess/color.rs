@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[repr(u8)]
 pub enum Color {
     White,
@@ -35,6 +35,20 @@ impl std::ops::Not for Color {
             Self::White => Self::Black,
             Self::Black => Self::White,
         }
+    }
+}
+
+impl<T, const N: usize> std::ops::Index<Color> for [T; N] {
+    type Output = T;
+
+    fn index(&self, color: Color) -> &Self::Output {
+        &self[color.index()]
+    }
+}
+
+impl<T, const N: usize> std::ops::IndexMut<Color> for [T; N] {
+    fn index_mut(&mut self, color: Color) -> &mut Self::Output {
+        &mut self[color.index()]
     }
 }
 

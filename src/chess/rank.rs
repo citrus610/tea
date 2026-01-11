@@ -1,6 +1,6 @@
 use crate::chess::color::Color;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[repr(u8)]
 pub enum Rank {
     First,
@@ -28,9 +28,17 @@ impl Rank {
 
     #[inline(always)]
     pub const fn from_raw(value: u8) -> Self {
-        debug_assert!(value < Self::COUNT as u8);
-
-        unsafe { std::mem::transmute(value) }
+        match value {
+            0 => Self::First,
+            1 => Self::Second,
+            2 => Self::Third,
+            3 => Self::Fourth,
+            4 => Self::Fifth,
+            5 => Self::Sixth,
+            6 => Self::Seventh,
+            7 => Self::Eighth,
+            _ => panic!("invalid index!")
+        }
     }
 
     #[inline(always)]
@@ -49,6 +57,33 @@ impl Rank {
             Color::White => self,
             Color::Black => self.flip()
         }
+    }
+
+    pub fn all() -> impl DoubleEndedIterator<Item = Self> {
+        [
+            Self::First,
+            Self::Second,
+            Self::Third,
+            Self::Fourth,
+            Self::Fifth,
+            Self::Sixth,
+            Self::Seventh,
+            Self::Eighth
+        ].into_iter()
+    }
+}
+
+impl<T, const N: usize> std::ops::Index<Rank> for [T; N] {
+    type Output = T;
+
+    fn index(&self, rank: Rank) -> &Self::Output {
+        &self[rank.index()]
+    }
+}
+
+impl<T, const N: usize> std::ops::IndexMut<Rank> for [T; N] {
+    fn index_mut(&mut self, rank: Rank) -> &mut Self::Output {
+        &mut self[rank.index()]
     }
 }
 

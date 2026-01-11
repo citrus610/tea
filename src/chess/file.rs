@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[repr(u8)]
 pub enum File {
     A,
@@ -26,9 +26,17 @@ impl File {
 
     #[inline(always)]
     pub const fn from_raw(value: u8) -> Self {
-        debug_assert!(value < Self::COUNT as u8);
-
-        unsafe { std::mem::transmute(value) }
+        match value {
+            0 => Self::A,
+            1 => Self::B,
+            2 => Self::C,
+            3 => Self::D,
+            4 => Self::E,
+            5 => Self::F,
+            6 => Self::G,
+            7 => Self::H,
+            _ => panic!("invalid index!")
+        }
     }
 
     #[inline(always)]
@@ -39,6 +47,33 @@ impl File {
     #[inline(always)]
     pub const fn distance(self, other: Self) -> u8 {
         self.value().abs_diff(other.value())
+    }
+
+    pub fn all() -> impl DoubleEndedIterator<Item = Self> {
+        [
+            Self::A,
+            Self::B,
+            Self::C,
+            Self::D,
+            Self::E,
+            Self::F,
+            Self::G,
+            Self::H
+        ].into_iter()
+    }
+}
+
+impl<T, const N: usize> std::ops::Index<File> for [T; N] {
+    type Output = T;
+
+    fn index(&self, file: File) -> &Self::Output {
+        &self[file.index()]
+    }
+}
+
+impl<T, const N: usize> std::ops::IndexMut<File> for [T; N] {
+    fn index_mut(&mut self, file: File) -> &mut Self::Output {
+        &mut self[file.index()]
     }
 }
 

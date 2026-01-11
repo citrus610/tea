@@ -1,6 +1,6 @@
-use crate::chess::{file::File, rank::Rank, square::Square};
+use crate::chess::{direction::Direction, file::File, rank::Rank, square::Square};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[repr(transparent)]
 pub struct Bitboard {
     data: u64
@@ -13,13 +13,18 @@ impl Bitboard {
     }
 
     #[inline(always)]
+    pub const fn from_raw(value: u64) -> Self {
+        Self { data: value }
+    }
+
+    #[inline(always)]
     pub const fn from_square(square: Square) -> Self {
         Self { data: 1u64 << square.index() }
     }
 
     #[inline(always)]
     pub const fn from_rank(rank: Rank) -> Self {
-        Self { data: 0xFFu64 << (rank.index() * 8) }
+        Self { data: 0xffu64 << (rank.index() * 8) }
     }
 
     #[inline(always)]
@@ -40,6 +45,20 @@ impl Bitboard {
     #[inline(always)]
     pub const fn count(self) -> usize {
         self.data.count_ones() as usize
+    }
+
+    #[inline(always)]
+    pub const fn shift(&mut self, direction: Direction) -> Self {
+        match direction {
+            Direction::North => Self { data: self.data << 8 },
+            Direction::South => Self { data: self.data >> 8 },
+            Direction::East => Self { data: (self.data & !Self::from_file(File::H).data) << 1 },
+            Direction::West => Self { data: (self.data & !Self::from_file(File::A).data) >> 1 },
+            Direction::NorthEast => Self { data: (self.data & !Self::from_file(File::H).data) << 9 },
+            Direction::NorthWest => Self { data: (self.data & !Self::from_file(File::A).data) << 7 },
+            Direction::SouthEast => Self { data: (self.data & !Self::from_file(File::H).data) >> 7 },
+            Direction::SouthWest => Self { data: (self.data & !Self::from_file(File::A).data) >> 9 } 
+        }
     }
 
     #[inline(always)]
@@ -133,5 +152,19 @@ impl std::ops::Not for Bitboard {
 
     fn not(self) -> Self::Output {
         Self { data: !self.data }
+    }
+}
+
+impl std::fmt::Display for Bitboard {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for rank in Rank::all().rev() {
+            for file in File::all() {
+                write!(f, "{} ", if self.is_set(Square::new(rank, file)) { 'X' } else { '.' })?;
+            }
+
+            write!(f, "\n")?;
+        }
+
+        Ok(())
     }
 }
