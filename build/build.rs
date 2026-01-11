@@ -11,8 +11,8 @@ fn write_magic() {
     let file = File::create(path).unwrap();
     let mut buffer = BufWriter::new(file);
 
-    writeln!(buffer, "pub const {}: [Magic; 64] = {:?};\n", "BISHOP_MAGICS", bishop_magic_table()).unwrap();
-    writeln!(buffer, "pub const {}: [Magic; 64] = {:?};\n", "ROOK_MAGICS", rook_magic_table()).unwrap();
+    writeln!(buffer, "pub const {}: [Magic; 64] = {:?};", "BISHOP_MAGICS", bishop_magic_table()).unwrap();
+    writeln!(buffer, "pub const {}: [Magic; 64] = {:?};", "ROOK_MAGICS", rook_magic_table()).unwrap();
 }
 
 fn write_attack() {
@@ -24,22 +24,8 @@ fn write_attack() {
     writeln!(buffer, "const {}: [[u64; 64]; 2] = {:?};", "PAWN_ATTACKS", pawn_table()).unwrap();
     writeln!(buffer, "const {}: [u64; 64] = {:?};", "KING_ATTACKS", king_table()).unwrap();
     writeln!(buffer, "const {}: [u64; 64] = {:?};", "KNIGHT_ATTACKS", knight_table()).unwrap();
-
-    write!(buffer, "const {}: [u64; {}] = [", "BISHOP_ATTACKS", BISHOP_TABLE_SIZE).unwrap();
-
-    for attacks in bishop_table() {
-        write!(buffer, "{}, ", attacks).unwrap();
-    }
-
-    write!(buffer, "];\n").unwrap();
-
-    write!(buffer, "const {}: [u64; {}] = [", "ROOK_ATTACKS", ROOK_TABLE_SIZE).unwrap();
-
-    for attacks in rook_table() {
-        write!(buffer, "{}, ", attacks).unwrap();
-    }
-
-    write!(buffer, "];\n").unwrap();
+    writeln!(buffer, "const {}: [u64; {}] = {:?};", "BISHOP_ATTACKS", BISHOP_TABLE_SIZE, bishop_table()).unwrap();
+    writeln!(buffer, "const {}: [u64; {}] = {:?};", "ROOK_ATTACKS", ROOK_TABLE_SIZE, rook_table()).unwrap();
 }
 
 fn main() {
