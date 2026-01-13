@@ -35,6 +35,17 @@ impl CastleKind {
     }
 
     #[inline(always)]
+    pub const fn from_corner(square: Square) -> Option<Self> {
+        match square {
+            Square::H1 => Some(Self::WhiteShort),
+            Square::A1 => Some(Self::WhiteLong),
+            Square::H8 => Some(Self::BlackShort),
+            Square::A8 => Some(Self::BlackLong),
+            _ => None
+        }
+    }
+
+    #[inline(always)]
     pub const fn king_to(self) -> Square {
         match self {
             Self::WhiteShort => Square::G1,
@@ -51,6 +62,25 @@ impl CastleKind {
             Self::WhiteLong => Square::D1,
             Self::BlackShort => Square::F8,
             Self::BlackLong => Square::D8,
+        }
+    }
+
+    #[inline(always)]
+    pub const fn rook_from(self) -> Square {
+        match self {
+            Self::WhiteShort => Square::H1,
+            Self::WhiteLong => Square::A1,
+            Self::BlackShort => Square::H8,
+            Self::BlackLong => Square::A8,
+        }
+    }
+
+    #[inline(always)]
+    pub const fn is_short(self) -> bool {
+        match self {
+            Self::WhiteShort => true,
+            Self::BlackShort => true,
+            _ => false
         }
     }
 
@@ -88,5 +118,19 @@ impl Castle {
     #[inline(always)]
     pub const fn is_allowed(self, kind: CastleKind) -> bool {
         self.value() & kind.value() == 0
+    }
+}
+
+impl<T, const N: usize> std::ops::Index<Castle> for [T; N] {
+    type Output = T;
+
+    fn index(&self, castle: Castle) -> &Self::Output {
+        &self[castle.index()]
+    }
+}
+
+impl<T, const N: usize> std::ops::IndexMut<Castle> for [T; N] {
+    fn index_mut(&mut self, castle: Castle) -> &mut Self::Output {
+        &mut self[castle.index()]
     }
 }

@@ -10,3 +10,6 @@ pub mod bitboard;
 pub mod magic;
 pub mod attack;
 pub mod zobrist;
+pub mod board;
+pub mod movelist;
+pub mod movegen;

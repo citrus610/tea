@@ -21,8 +21,8 @@ pub fn pawn_table() -> [[u64; 64]; 2] {
     table
 }
 
-pub fn king_table() -> [u64; 64] {
-    let mut table = [0; 64];
+pub fn king_table() -> Vec<u64> {
+    let mut table = vec![0; 64];
 
     for square in 0..64 {
         let bitboard = 1u64 << square;
@@ -37,8 +37,8 @@ pub fn king_table() -> [u64; 64] {
     table
 }
 
-pub fn knight_table() -> [u64; 64] {
-    let mut table = [0; 64];
+pub fn knight_table() -> Vec<u64> {
+    let mut table = vec![0; 64];
 
     for square in 0..64 {
         let bitboard = 1u64 << square;
@@ -53,7 +53,7 @@ pub fn knight_table() -> [u64; 64] {
     table
 }
 
-pub fn slider_table<const SIZE: usize>(magics: [Magic; 64], delta: [(i32, i32); 4]) -> Vec<u64> {
+pub fn slider_table<const SIZE: usize>(magics: &Vec<Magic>, delta: [(i32, i32); 4]) -> Vec<u64> {
     let mut table = vec![0; SIZE];
 
     for square in 0..64 {
@@ -62,7 +62,7 @@ pub fn slider_table<const SIZE: usize>(magics: [Magic; 64], delta: [(i32, i32); 
         loop {
             table[magics[square].index(occupied)] = slider_attacks(square, occupied, delta);
 
-            occupied = (occupied - magics[square].mask) & magics[square].mask;
+            occupied = occupied.wrapping_sub(magics[square].mask) & magics[square].mask;
 
             if occupied == 0 {
                 break;
@@ -74,9 +74,9 @@ pub fn slider_table<const SIZE: usize>(magics: [Magic; 64], delta: [(i32, i32); 
 }
 
 pub fn bishop_table() -> Vec<u64> {
-    slider_table::<BISHOP_TABLE_SIZE>(bishop_magic_table(), BISHOP_DELTA)
+    slider_table::<BISHOP_TABLE_SIZE>(&bishop_magic_table(), BISHOP_DELTA)
 }
 
 pub fn rook_table() -> Vec<u64> {
-    slider_table::<ROOK_TABLE_SIZE>(rook_magic_table(), ROOK_DELTA)
+    slider_table::<ROOK_TABLE_SIZE>(&rook_magic_table(), ROOK_DELTA)
 }

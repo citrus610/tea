@@ -1,3 +1,5 @@
+include!(concat!(env!("OUT_DIR"), "/mask.rs"));
+
 use crate::chess::{direction::Direction, file::File, rank::Rank, square::Square};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -33,6 +35,16 @@ impl Bitboard {
     }
 
     #[inline(always)]
+    pub const fn from_between(a: Square, b: Square) -> Self {
+        Self { data: BETWEENS[a.index()][b.index()] }
+    }
+
+    #[inline(always)]
+    pub const fn from_line(a: Square, b: Square) -> Self {
+        Self { data: LINES[a.index()][b.index()] }
+    }
+
+    #[inline(always)]
     pub const fn value(self) -> u64 {
         self.data
     }
@@ -48,7 +60,7 @@ impl Bitboard {
     }
 
     #[inline(always)]
-    pub const fn shift(&mut self, direction: Direction) -> Self {
+    pub const fn shift(self, direction: Direction) -> Self {
         match direction {
             Direction::North => Self { data: self.data << 8 },
             Direction::South => Self { data: self.data >> 8 },
@@ -83,12 +95,12 @@ impl Bitboard {
 
     #[inline(always)]
     pub const fn is_only(self) -> bool {
-        self.is_some() && !self.is_many()
+        self.count() == 1
     }
 
     #[inline(always)]
     pub const fn is_many(self) -> bool {
-        self.data & (self.data - 1) != 0
+        self.data & self.data.wrapping_sub(1) != 0
     }
 
     #[inline(always)]
@@ -103,7 +115,8 @@ impl Iterator for Bitboard {
     fn next(&mut self) -> Option<Self::Item> {
         if self.is_empty() {
             None
-        } else {
+        }
+        else {
             let lsb = self.lsb();
             self.data &= self.data - 1;
             Some(lsb)
@@ -144,6 +157,12 @@ impl std::ops::BitOrAssign for Bitboard {
 impl std::ops::BitAndAssign for Bitboard {
     fn bitand_assign(&mut self, rhs: Self) {
         self.data &= rhs.data;
+    }
+}
+
+impl std::ops::BitXorAssign for Bitboard {
+    fn bitxor_assign(&mut self, rhs: Self) {
+        self.data ^= rhs.data;
     }
 }
 

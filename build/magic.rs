@@ -74,7 +74,7 @@ pub struct Magic {
 
 impl Magic {
     pub const fn index(self, occupied: u64) -> usize {
-        (((occupied & self.mask) * self.magic) >> self.shift) as usize + self.offset
+        ((occupied & self.mask).wrapping_mul(self.magic) >> self.shift) as usize + self.offset
     }
 }
 
@@ -107,8 +107,8 @@ pub fn slider_attacks(square: usize, occupied: u64, delta: [(i32, i32); 4]) -> u
     result
 }
 
-pub fn magic_table(magics: [u64; 64], delta: [(i32, i32); 4]) -> [Magic; 64] {
-    let mut table = [Magic { mask: 0, magic: 0, shift: 0, offset: 0 }; 64];
+pub fn magic_table(magics: [u64; 64], delta: [(i32, i32); 4]) -> Vec<Magic> {
+    let mut table = vec![Magic { mask: 0, magic: 0, shift: 0, offset: 0 }; 64];
 
     for square in 0..64 {
         let edge = (RANK_18 & !RANKS[square / 8]) | (FILE_AB & !FILES[square % 8]);
@@ -125,10 +125,10 @@ pub fn magic_table(magics: [u64; 64], delta: [(i32, i32); 4]) -> [Magic; 64] {
     table
 }
 
-pub fn bishop_magic_table() -> [Magic; 64] {
+pub fn bishop_magic_table() -> Vec<Magic> {
     magic_table(BISHOP_MAGICS, BISHOP_DELTA)
 }
 
-pub fn rook_magic_table() -> [Magic; 64] {
+pub fn rook_magic_table() -> Vec<Magic> {
     magic_table(ROOK_MAGICS, ROOK_DELTA)
 }

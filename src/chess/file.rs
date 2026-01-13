@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 #[repr(u8)]
 pub enum File {
     A,
@@ -26,16 +26,23 @@ impl File {
 
     #[inline(always)]
     pub const fn from_raw(value: u8) -> Self {
-        match value {
-            0 => Self::A,
-            1 => Self::B,
-            2 => Self::C,
-            3 => Self::D,
-            4 => Self::E,
-            5 => Self::F,
-            6 => Self::G,
-            7 => Self::H,
-            _ => panic!("invalid index!")
+        debug_assert!(value < Self::COUNT as u8);
+
+        unsafe { std::mem::transmute(value) }
+    }
+
+    #[inline(always)]
+    pub const fn from_char(character: char) -> Option<Self> {
+        match character {
+            'a' => Some(Self::A),
+            'b' => Some(Self::B),
+            'c' => Some(Self::C),
+            'd' => Some(Self::D),
+            'e' => Some(Self::E),
+            'f' => Some(Self::F),
+            'g' => Some(Self::G),
+            'h' => Some(Self::H),
+            _ => None
         }
     }
 

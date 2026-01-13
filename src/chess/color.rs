@@ -25,6 +25,15 @@ impl Color {
             false => Self::White
         }
     }
+
+    #[inline(always)]
+    pub const fn from_char(character: char) -> Option<Self> {
+        match character {
+            'w' => Some(Self::White),
+            'b' => Some(Self::Black),
+            _ => None
+        }
+    }
 }
 
 impl std::ops::Not for Color {

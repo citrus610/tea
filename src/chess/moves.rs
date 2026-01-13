@@ -1,6 +1,6 @@
 use crate::chess::{piece::PieceKind, square::Square};
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 #[repr(u16)]
 pub enum MoveKind {
     Normal,
@@ -83,6 +83,11 @@ impl Move {
             MoveKind::PromotionQueen => Some(PieceKind::Queen),
             _ => None
         }
+    }
+
+    #[inline(always)]
+    pub const fn encode(self) -> usize {
+        self.data as usize % 4096
     }
 
     #[inline(always)]

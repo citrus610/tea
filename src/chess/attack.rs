@@ -19,26 +19,26 @@ pub const fn pawn_west_attacks(square: Square, color: Color) -> Bitboard {
 }
 
 #[inline(always)]
-pub const fn pawn_attacks(square: Square, color: Color) -> Bitboard {
+pub fn pawn_attacks(square: Square, color: Color) -> Bitboard {
     Bitboard::from_raw(PAWN_ATTACKS[color.index()][square.index()])
 }
 
 #[inline(always)]
-pub const fn king_attacks(square: Square) -> Bitboard {
+pub fn king_attacks(square: Square) -> Bitboard {
     Bitboard::from_raw(KING_ATTACKS[square.index()])
 }
 
 #[inline(always)]
-pub const fn knight_attacks(square: Square) -> Bitboard {
+pub fn knight_attacks(square: Square) -> Bitboard {
     Bitboard::from_raw(KNIGHT_ATTACKS[square.index()])
 }
 
 #[inline(always)]
-pub const fn bishop_attacks(square: Square, occupied: Bitboard) -> Bitboard {
+pub fn bishop_attacks(square: Square, occupied: Bitboard) -> Bitboard {
     Bitboard::from_raw(BISHOP_ATTACKS[BISHOP_MAGICS[square.index()].index(occupied)])
 }
 
 #[inline(always)]
-pub const fn rook_attacks(square: Square, occupied: Bitboard) -> Bitboard {
+pub fn rook_attacks(square: Square, occupied: Bitboard) -> Bitboard {
     Bitboard::from_raw(ROOK_ATTACKS[ROOK_MAGICS[square.index()].index(occupied)])
 }

@@ -1,18 +1,30 @@
 #![allow(dead_code)]
 
-use crate::chess::{attack::*, bitboard::Bitboard, color::Color, file::File, rank::Rank, square::Square};
+use crate::chess::{bitboard::Bitboard, board::Board, movegen::perft, moves::{Move, MoveKind}, square::Square};
 
 mod chess;
 
 fn main() {
     println!("Hello, world!");
 
-    let occupied = Bitboard::from_file(File::C) | Bitboard::from_file(File::G) | Bitboard::from_rank(Rank::Third) | Bitboard::from_rank(Rank::Seventh);
+    // for a in 0..64 {
+    //     for b in 0..64 {
+    //         let m = Bitboard::from_line(Square::from_raw(a), Square::from_raw(b)) | Bitboard::from_raw(1 << a) | Bitboard::from_raw(1 << b);
 
-    println!("{}", pawn_attacks(Square::D4, Color::White));
-    println!("{}", king_attacks(Square::D4));
-    println!("{}", knight_attacks(Square::D4));
-    println!("{}", occupied);
-    println!("{}", bishop_attacks(Square::D4, occupied) | occupied);
-    println!("{}", rook_attacks(Square::D4, occupied) | occupied);
+    //         println!("{}", m);
+
+    //         let mut input = String::new();
+
+    //         std::io::stdin().read_line(&mut input).expect("w");
+    //     }
+    // }
+
+    let mut board = Board::startpos().unwrap();
+
+    // board.make(Move::new(Square::A2, Square::A4, MoveKind::Normal));
+    // board.make(Move::new(Square::A7, Square::A6, MoveKind::Normal));
+    // board.make(Move::new(Square::A4, Square::A5, MoveKind::Normal));
+    // board.make(Move::new(Square::B7, Square::B5, MoveKind::Normal));
+
+    println!("{}", perft::<true>(&mut board, 7));
 }

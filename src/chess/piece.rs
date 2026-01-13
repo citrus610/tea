@@ -43,15 +43,23 @@ impl PieceKind {
 
     #[inline(always)]
     pub const fn from_raw(value: u8) -> Self {
-        match value {
-            0 => Self::Pawn,
-            1 => Self::Knight,
-            2 => Self::Bishop,
-            3 => Self::Rook,
-            4 => Self::Queen,
-            5 => Self::King,
-            _ => panic!("invalid index")
-        }
+        debug_assert!(value < Self::COUNT as u8);
+
+        unsafe { std::mem::transmute(value) }
+    }
+}
+
+impl<T, const N: usize> std::ops::Index<PieceKind> for [T; N] {
+    type Output = T;
+
+    fn index(&self, kind: PieceKind) -> &Self::Output {
+        &self[kind.index()]
+    }
+}
+
+impl<T, const N: usize> std::ops::IndexMut<PieceKind> for [T; N] {
+    fn index_mut(&mut self, kind: PieceKind) -> &mut Self::Output {
+        &mut self[kind.index()]
     }
 }
 
@@ -83,20 +91,27 @@ impl Piece {
 
     #[inline(always)]
     pub const fn from_raw(value: u8) -> Self {
-        match value {
-            0 => Self::WhitePawn,
-            1 => Self::BlackPawn,
-            2 => Self::WhiteKnight,
-            3 => Self::BlackKnight,
-            4 => Self::WhiteBishop,
-            5 => Self::BlackBishop,
-            6 => Self::WhiteRook,
-            7 => Self::BlackRook,
-            8 => Self::WhiteQueen,
-            9 => Self::BlackQueen,
-            10 => Self::WhiteKing,
-            11 => Self::BlackKing,
-            _ => panic!("invalid index!")
+        debug_assert!(value < Self::COUNT as u8);
+
+        unsafe { std::mem::transmute(value) }
+    }
+
+    #[inline(always)]
+    pub const fn from_char(character: char) -> Option<Self> {
+        match character {
+            'P' => Some(Piece::WhitePawn),
+            'N' => Some(Piece::WhiteKnight),
+            'B' => Some(Piece::WhiteBishop),
+            'R' => Some(Piece::WhiteRook),
+            'Q' => Some(Piece::WhiteQueen),
+            'K' => Some(Piece::WhiteKing),
+            'p' => Some(Piece::BlackPawn),
+            'n' => Some(Piece::BlackKnight),
+            'b' => Some(Piece::BlackBishop),
+            'r' => Some(Piece::BlackRook),
+            'q' => Some(Piece::BlackQueen),
+            'k' => Some(Piece::BlackKing),
+            _ => None
         }
     }
 
@@ -113,6 +128,20 @@ impl Piece {
     #[inline(always)]
     pub const fn color(self) -> Color {
         Color::from_raw(self.value() % 2 != 0)
+    }
+}
+
+impl<T, const N: usize> std::ops::Index<Piece> for [T; N] {
+    type Output = T;
+
+    fn index(&self, piece: Piece) -> &Self::Output {
+        &self[piece.index()]
+    }
+}
+
+impl<T, const N: usize> std::ops::IndexMut<Piece> for [T; N] {
+    fn index_mut(&mut self, piece: Piece) -> &mut Self::Output {
+        &mut self[piece.index()]
     }
 }
 

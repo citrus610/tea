@@ -1,6 +1,6 @@
 use crate::chess::color::Color;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 #[repr(u8)]
 pub enum Rank {
     First,
@@ -28,16 +28,23 @@ impl Rank {
 
     #[inline(always)]
     pub const fn from_raw(value: u8) -> Self {
-        match value {
-            0 => Self::First,
-            1 => Self::Second,
-            2 => Self::Third,
-            3 => Self::Fourth,
-            4 => Self::Fifth,
-            5 => Self::Sixth,
-            6 => Self::Seventh,
-            7 => Self::Eighth,
-            _ => panic!("invalid index!")
+        debug_assert!(value < Self::COUNT as u8);
+
+        unsafe { std::mem::transmute(value) }
+    }
+
+    #[inline(always)]
+    pub const fn from_char(character: char) -> Option<Self> {
+        match character {
+            '1' => Some(Self::First),
+            '2' => Some(Self::Second),
+            '3' => Some(Self::Third),
+            '4' => Some(Self::Fourth),
+            '5' => Some(Self::Fifth),
+            '6' => Some(Self::Sixth),
+            '7' => Some(Self::Seventh),
+            '8' => Some(Self::Eighth),
+            _ => None
         }
     }
 

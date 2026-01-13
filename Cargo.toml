@@ -5,9 +5,11 @@ edition = "2024"
 build = "build/build.rs"
 
 [dependencies]
+arrayvec = "0.7.6"
 
 [profile.release]
 lto = true
 codegen-units = 1
 panic = "abort"
 strip = true
+debug-assertions = false
