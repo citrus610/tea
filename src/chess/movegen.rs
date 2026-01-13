@@ -39,240 +39,242 @@ impl KindTrait for All {
     const NOISY: bool = true;
 }
 
-fn push_normal_moves(list: &mut MoveList, from: Square, targets: Bitboard) {
-    for to in targets {
-        list.push(Move::new(from, to, MoveKind::Normal));
-    }
-}
-
-fn push_promotion_moves(list: &mut MoveList, from: Square, to: Square) {
-    list.push(Move::new(from, to, MoveKind::PromotionQueen));
-    list.push(Move::new(from, to, MoveKind::PromotionRook));
-    list.push(Move::new(from, to, MoveKind::PromotionBishop));
-    list.push(Move::new(from, to, MoveKind::PromotionKnight));
-}
-
-fn push_castling_moves<C: ColorTrait>(list: &mut MoveList, board: &Board) {
-    let king_square = board.state.king_square(C::COLOR);
-    let occupied = board.state.occupied();
-    let castles = match C::COLOR {
-        Color::White => [CastleKind::WhiteShort, CastleKind::WhiteLong],
-        Color::Black => [CastleKind::BlackShort, CastleKind::BlackLong]
-    };
-
-    for castle in castles {
-        if !board.state.castles().is_allowed(castle) {
-            continue;
-        }
-
-        if (Bitboard::from_between(king_square, castle.rook_from()) & occupied).is_some() {
-            continue;
-        }
-
-        list.push(Move::new(king_square, castle.king_to(), MoveKind::Castling));
-    }
-}
-
-fn push_pawn_moves<C: ColorTrait, K: KindTrait>(list: &mut MoveList, board: &Board, checkmask: Bitboard) {
-    let north = match C::COLOR {
-        Color::White => Direction::North,
-        Color::Black => Direction::South
-    };
-
-    let north_east = match C::COLOR {
-        Color::White => Direction::NorthEast,
-        Color::Black => Direction::SouthWest
-    };
-
-    let north_west = match C::COLOR {
-        Color::White => Direction::NorthWest,
-        Color::Black => Direction::SouthEast
-    };
-
-    let mask_push = match C::COLOR {
-        Color::White => Bitboard::from_rank(Rank::Third),
-        Color::Black => Bitboard::from_rank(Rank::Sixth)
-    };
-
-    let mask_promotion = match C::COLOR {
-        Color::White => Bitboard::from_rank(Rank::Eighth),
-        Color::Black => Bitboard::from_rank(Rank::First)
-    };
-
-    let offset_north = match C::COLOR {
-        Color::White => 8,
-        Color::Black => -8
-    };
-
-    let offset_north_east = match C::COLOR {
-        Color::White => 9,
-        Color::Black => -9
-    };
-
-    let offset_north_west = match C::COLOR {
-        Color::White => 7,
-        Color::Black => -7
-    };
-
-    let pawns = board.state.colors(C::COLOR) & board.state.pieces(PieceKind::Pawn);
-    let enemy = board.state.colors(!C::COLOR);
-    let empty = !board.state.occupied();
-
-    let mut push = pawns.shift(north) & empty;
-    let mut double_push = (push & mask_push).shift(north) & empty;
-    let mut east = pawns.shift(north_east) & enemy & checkmask;
-    let mut west = pawns.shift(north_west) & enemy & checkmask;
-
-    push &= checkmask;
-    double_push &= checkmask;
-
-    if K::NOISY {
-        let push_promotion = push & mask_promotion;
-        let east_promotion = east & mask_promotion;
-        let west_promotion = west & mask_promotion;
-
-        for to in push_promotion {
-            push_promotion_moves(list, Square::from_raw((to as i32 - offset_north) as u8), to);
-        }
-
-        for to in east_promotion {
-            push_promotion_moves(list, Square::from_raw((to as i32 - offset_north_east) as u8), to);
-        }
-
-        for to in west_promotion {
-            push_promotion_moves(list, Square::from_raw((to as i32 - offset_north_west) as u8), to);
+impl Board {
+    fn push_normal_moves(list: &mut MoveList, from: Square, targets: Bitboard) {
+        for to in targets {
+            list.push(Move::new(from, to, MoveKind::Normal));
         }
     }
 
-    push &= !mask_promotion;
-    east &= !mask_promotion;
-    west &= !mask_promotion;
+    fn push_promotion_moves(list: &mut MoveList, from: Square, to: Square) {
+        list.push(Move::new(from, to, MoveKind::PromotionQueen));
+        list.push(Move::new(from, to, MoveKind::PromotionRook));
+        list.push(Move::new(from, to, MoveKind::PromotionBishop));
+        list.push(Move::new(from, to, MoveKind::PromotionKnight));
+    }
 
-    if K::QUIET {
-        for to in push {
-            list.push(Move::new(Square::from_raw((to as i32 - offset_north) as u8), to, MoveKind::Normal));
-        }
+    fn push_castling_moves<C: ColorTrait>(&self, list: &mut MoveList) {
+        let king_square = self.state.king_square(C::COLOR);
+        let occupied = self.state.occupied();
+        let castles = match C::COLOR {
+            Color::White => [CastleKind::WhiteShort, CastleKind::WhiteLong],
+            Color::Black => [CastleKind::BlackShort, CastleKind::BlackLong]
+        };
 
-        for to in double_push {
-            list.push(Move::new(Square::from_raw((to as i32 - offset_north * 2) as u8), to, MoveKind::Normal));
+        for castle in castles {
+            if !self.state.castles().is_allowed(castle) {
+                continue;
+            }
+
+            if (Bitboard::from_between(king_square, castle.rook_from()) & occupied).is_some() {
+                continue;
+            }
+
+            list.push(Move::new(king_square, castle.king_to(), MoveKind::Castling));
         }
     }
 
-    if K::NOISY {
-        for to in east {
-            list.push(Move::new(Square::from_raw((to as i32 - offset_north_east) as u8), to, MoveKind::Normal));
+    fn push_pawn_moves<C: ColorTrait, K: KindTrait>(&self, list: &mut MoveList, checkmask: Bitboard) {
+        let north = match C::COLOR {
+            Color::White => Direction::North,
+            Color::Black => Direction::South
+        };
+
+        let north_east = match C::COLOR {
+            Color::White => Direction::NorthEast,
+            Color::Black => Direction::SouthWest
+        };
+
+        let north_west = match C::COLOR {
+            Color::White => Direction::NorthWest,
+            Color::Black => Direction::SouthEast
+        };
+
+        let mask_push = match C::COLOR {
+            Color::White => Bitboard::from_rank(Rank::Third),
+            Color::Black => Bitboard::from_rank(Rank::Sixth)
+        };
+
+        let mask_promotion = match C::COLOR {
+            Color::White => Bitboard::from_rank(Rank::Eighth),
+            Color::Black => Bitboard::from_rank(Rank::First)
+        };
+
+        let offset_north = match C::COLOR {
+            Color::White => 8,
+            Color::Black => -8
+        };
+
+        let offset_north_east = match C::COLOR {
+            Color::White => 9,
+            Color::Black => -9
+        };
+
+        let offset_north_west = match C::COLOR {
+            Color::White => 7,
+            Color::Black => -7
+        };
+
+        let pawns = self.state.colors(C::COLOR) & self.state.pieces(PieceKind::Pawn);
+        let enemy = self.state.colors(!C::COLOR);
+        let empty = !self.state.occupied();
+
+        let mut push = pawns.shift(north) & empty;
+        let mut double_push = (push & mask_push).shift(north) & empty;
+        let mut east = pawns.shift(north_east) & enemy & checkmask;
+        let mut west = pawns.shift(north_west) & enemy & checkmask;
+
+        push &= checkmask;
+        double_push &= checkmask;
+
+        if K::NOISY {
+            let push_promotion = push & mask_promotion;
+            let east_promotion = east & mask_promotion;
+            let west_promotion = west & mask_promotion;
+
+            for to in push_promotion {
+                Self::push_promotion_moves(list, Square::from_raw((to as i32 - offset_north) as u8), to);
+            }
+
+            for to in east_promotion {
+                Self::push_promotion_moves(list, Square::from_raw((to as i32 - offset_north_east) as u8), to);
+            }
+
+            for to in west_promotion {
+                Self::push_promotion_moves(list, Square::from_raw((to as i32 - offset_north_west) as u8), to);
+            }
         }
 
-        for to in west {
-            list.push(Move::new(Square::from_raw((to as i32 - offset_north_west) as u8), to, MoveKind::Normal));
+        push &= !mask_promotion;
+        east &= !mask_promotion;
+        west &= !mask_promotion;
+
+        if K::QUIET {
+            for to in push {
+                list.push(Move::new(Square::from_raw((to as i32 - offset_north) as u8), to, MoveKind::Normal));
+            }
+
+            for to in double_push {
+                list.push(Move::new(Square::from_raw((to as i32 - offset_north * 2) as u8), to, MoveKind::Normal));
+            }
         }
 
-        if let Some(enpassant) = board.state.enpassant() {
-            let ep = pawn_attacks(enpassant, !C::COLOR) & pawns;
+        if K::NOISY {
+            for to in east {
+                list.push(Move::new(Square::from_raw((to as i32 - offset_north_east) as u8), to, MoveKind::Normal));
+            }
 
-            for from in ep {
-                list.push(Move::new(from, enpassant, MoveKind::Enpassant));
+            for to in west {
+                list.push(Move::new(Square::from_raw((to as i32 - offset_north_west) as u8), to, MoveKind::Normal));
+            }
+
+            if let Some(enpassant) = self.state.enpassant() {
+                let ep = pawn_attacks(enpassant, !C::COLOR) & pawns;
+
+                for from in ep {
+                    list.push(Move::new(from, enpassant, MoveKind::Enpassant));
+                }
             }
         }
     }
-}
 
-fn movegen<C: ColorTrait, K: KindTrait>(board: &Board) -> MoveList {
-    let mut list = MoveList::new();
+    fn movegen<C: ColorTrait, K: KindTrait>(&self) -> MoveList {
+        let mut list = MoveList::new();
 
-    let us = board.state.colors(C::COLOR);
-    let them = board.state.colors(!C::COLOR);
-    let occupied = us | them;
-    let checkers = board.state.checkers();
-    let blockers = board.state.blockers(C::COLOR);
+        let us = self.state.colors(C::COLOR);
+        let them = self.state.colors(!C::COLOR);
+        let occupied = us | them;
+        let checkers = self.state.checkers();
+        let blockers = self.state.blockers(C::COLOR);
 
-    let mut movable = !us;
+        let mut movable = !us;
 
-    if !K::QUIET {
-        movable = them;
-    }
-
-    if !K::NOISY {
-        movable = !occupied;
-    }
-
-    let king_square = board.state.king_square(C::COLOR);
-
-    push_normal_moves(&mut list, king_square, king_attacks(king_square) & movable);
-
-    if checkers.is_many() {
-        return list;
-    }
-
-    let checkmask = match checkers.is_some() {
-        true => checkers | Bitboard::from_between(king_square, checkers.lsb()),
-        false => Bitboard::from_raw(0xffffffffffffffff)
-    };
-
-    movable &= checkmask;
-
-    if K::QUIET && checkers.is_empty() {
-        push_castling_moves::<C>(&mut list, board);
-    }
-
-    push_pawn_moves::<C, K>(&mut list, board, checkmask);
-
-    let knights = board.state.pieces(PieceKind::Knight) & board.state.colors(C::COLOR) & !blockers;
-
-    for from in knights {
-        push_normal_moves(&mut list, from, knight_attacks(from) & movable);
-    }
-
-    let bishops = (board.state.pieces(PieceKind::Bishop) | board.state.pieces(PieceKind::Queen)) & board.state.colors(C::COLOR);
-
-    for from in bishops {
-        let mut targets = bishop_attacks(from, occupied) & movable;
-
-        if (Bitboard::from_square(from) & blockers).is_some() {
-            targets &= Bitboard::from_line(from, king_square);
+        if !K::QUIET {
+            movable = them;
         }
 
-        push_normal_moves(&mut list, from, targets);
-    }
-
-    let rooks = (board.state.pieces(PieceKind::Rook) | board.state.pieces(PieceKind::Queen)) & board.state.colors(C::COLOR);
-
-    for from in rooks {
-        let mut targets = rook_attacks(from, occupied) & movable;
-
-        if (Bitboard::from_square(from) & blockers).is_some() {
-            targets &= Bitboard::from_line(from, king_square);
+        if !K::NOISY {
+            movable = !occupied;
         }
 
-        push_normal_moves(&mut list, from, targets);
+        let king_square = self.state.king_square(C::COLOR);
+
+        Self::push_normal_moves(&mut list, king_square, king_attacks(king_square) & movable);
+
+        if checkers.is_many() {
+            return list;
+        }
+
+        let checkmask = match checkers.is_some() {
+            true => checkers | Bitboard::from_between(king_square, checkers.lsb()),
+            false => Bitboard::from_raw(0xffffffffffffffff)
+        };
+
+        movable &= checkmask;
+
+        if K::QUIET && checkers.is_empty() {
+            self.push_castling_moves::<C>(&mut list);
+        }
+
+        self.push_pawn_moves::<C, K>(&mut list, checkmask);
+
+        let knights = self.state.pieces(PieceKind::Knight) & self.state.colors(C::COLOR) & !blockers;
+
+        for from in knights {
+            Self::push_normal_moves(&mut list, from, knight_attacks(from) & movable);
+        }
+
+        let bishops = (self.state.pieces(PieceKind::Bishop) | self.state.pieces(PieceKind::Queen)) & self.state.colors(C::COLOR);
+
+        for from in bishops {
+            let mut targets = bishop_attacks(from, occupied) & movable;
+
+            if (Bitboard::from_square(from) & blockers).is_some() {
+                targets &= Bitboard::from_line(from, king_square);
+            }
+
+            Self::push_normal_moves(&mut list, from, targets);
+        }
+
+        let rooks = (self.state.pieces(PieceKind::Rook) | self.state.pieces(PieceKind::Queen)) & self.state.colors(C::COLOR);
+
+        for from in rooks {
+            let mut targets = rook_attacks(from, occupied) & movable;
+
+            if (Bitboard::from_square(from) & blockers).is_some() {
+                targets &= Bitboard::from_line(from, king_square);
+            }
+
+            Self::push_normal_moves(&mut list, from, targets);
+        }
+
+        list
     }
 
-    list
-}
-
-pub fn generate_quiet_moves(board: &Board) -> MoveList {
-    match board.color {
-        Color::White => movegen::<White, Quiet>(board),
-        Color::Black => movegen::<Black, Quiet>(board)
+    pub fn generate_quiet_moves(&self) -> MoveList {
+        match self.color {
+            Color::White => self.movegen::<White, Quiet>(),
+            Color::Black => self.movegen::<Black, Quiet>()
+        }
     }
-}
 
-pub fn generate_noisy_moves(board: &Board) -> MoveList {
-    match board.color {
-        Color::White => movegen::<White, Noisy>(board),
-        Color::Black => movegen::<Black, Noisy>(board)
+    pub fn generate_noisy_moves(&self) -> MoveList {
+        match self.color {
+            Color::White => self.movegen::<White, Noisy>(),
+            Color::Black => self.movegen::<Black, Noisy>()
+        }
     }
-}
 
-pub fn generate_moves(board: &Board) -> MoveList {
-    match board.color {
-        Color::White => movegen::<White, All>(board),
-        Color::Black => movegen::<Black, All>(board)
+    pub fn generate_moves(&self) -> MoveList {
+        match self.color {
+            Color::White => self.movegen::<White, All>(),
+            Color::Black => self.movegen::<Black, All>()
+        }
     }
 }
 
 pub fn perft<const ROOT: bool>(board: &mut Board, depth: i32) -> usize {
-    let moves = generate_moves(&board);
+    let moves = board.generate_moves();
     let mut count = 0;
 
     for &mv in moves.iter_moves() {
