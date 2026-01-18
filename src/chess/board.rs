@@ -135,39 +135,11 @@ impl State {
     }
 
     pub fn is_attacked(&self, square: Square, color: Color, occupied: Bitboard) -> bool {
-        let enemy = self.colors(!color);
-
-        let pawns = self.pieces(PieceKind::Pawn) & enemy;
-
-        if (pawn_attacks(square, color) & pawns).is_some() {
-            return true;
-        }
-
-        let kings = self.pieces(PieceKind::King) & enemy;
-
-        if (king_attacks(square) & kings).is_some() {
-            return true;
-        }
-
-        let knights = self.pieces(PieceKind::Knight) & enemy;
-
-        if (knight_attacks(square) & knights).is_some() {
-            return true;
-        }
-
-        let bishops = (self.pieces(PieceKind::Bishop) | self.pieces(PieceKind::Queen)) & enemy;
-
-        if (bishop_attacks(square, occupied) & bishops).is_some() {
-            return true;
-        }
-
-        let rooks = (self.pieces(PieceKind::Rook) | self.pieces(PieceKind::Queen)) & enemy;
-
-        if (rook_attacks(square, occupied) & rooks).is_some() {
-            return true;
-        }
-
-        false
+        (pawn_attacks(square, color) & self.pieces(PieceKind::Pawn) & self.colors(!color)).is_some() ||
+        (king_attacks(square) & self.pieces(PieceKind::King) & self.colors(!color)).is_some() ||
+        (knight_attacks(square) & self.pieces(PieceKind::Knight) & self.colors(!color)).is_some() ||
+        (bishop_attacks(square, occupied) & (self.pieces(PieceKind::Bishop) | self.pieces(PieceKind::Queen)) & self.colors(!color)).is_some() ||
+        (rook_attacks(square, occupied) & (self.pieces(PieceKind::Rook) | self.pieces(PieceKind::Queen)) & self.colors(!color)).is_some()
     }
 }
 

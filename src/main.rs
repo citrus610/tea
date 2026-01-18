@@ -6,8 +6,6 @@ use crate::chess::{board::Board, movegen::perft};
 mod chess;
 
 fn main() {
-    println!("Hello, world!");
-
     let mut board = Board::startpos().unwrap();
 
     let time = Instant::now();
@@ -16,5 +14,6 @@ fn main() {
     let knps = count as u128 / elasped;
 
     println!("perft: {}", count);
+    println!("time: {} ms", elasped);
     println!("nps: {} kn/s", knps);
 }
