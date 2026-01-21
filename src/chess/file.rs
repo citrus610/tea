@@ -26,9 +26,17 @@ impl File {
 
     #[inline(always)]
     pub const fn from_raw(value: u8) -> Self {
-        debug_assert!(value < Self::COUNT as u8);
-
-        unsafe { std::mem::transmute(value) }
+        match value {
+            0 => File::A,
+            1 => File::B,
+            2 => File::C,
+            3 => File::D,
+            4 => File::E,
+            5 => File::F,
+            6 => File::G,
+            7 => File::H,
+            _ => panic!("invalid index!")
+        }
     }
 
     #[inline(always)]

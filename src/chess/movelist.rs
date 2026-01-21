@@ -2,8 +2,6 @@ use arrayvec::ArrayVec;
 
 use crate::chess::moves::Move;
 
-const MAX: usize = 256;
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub struct MoveEntry {
@@ -13,7 +11,7 @@ pub struct MoveEntry {
 
 #[derive(Debug, Clone)]
 pub struct MoveList {
-    data: ArrayVec<MoveEntry, MAX>,
+    data: ArrayVec<MoveEntry, 256>,
 }
 
 impl MoveList {

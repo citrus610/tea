@@ -46,6 +46,11 @@ impl MoveKind {
     }
 
     #[inline(always)]
+    pub fn is_normal(self) -> bool {
+        self == Self::Normal
+    }
+
+    #[inline(always)]
     pub fn is_special(self) -> bool {
         self != Self::Normal
     }
@@ -98,6 +103,11 @@ impl Move {
     #[inline(always)]
     pub const fn is_null(self) -> bool {
         self.data == 0
+    }
+
+    #[inline(always)]
+    pub fn is_normal(self) -> bool {
+        self.kind().is_normal()
     }
 
     #[inline(always)]

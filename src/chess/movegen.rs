@@ -100,21 +100,6 @@ impl Board {
             Color::Black => Bitboard::from_rank(Rank::First)
         };
 
-        let offset_north = match C::COLOR {
-            Color::White => 8,
-            Color::Black => -8
-        };
-
-        let offset_north_east = match C::COLOR {
-            Color::White => 9,
-            Color::Black => -9
-        };
-
-        let offset_north_west = match C::COLOR {
-            Color::White => 7,
-            Color::Black => -7
-        };
-
         let pawns = self.state.colors(C::COLOR) & self.state.pieces(PieceKind::Pawn);
         let enemy = self.state.colors(!C::COLOR);
         let empty = !self.state.occupied();
@@ -133,15 +118,15 @@ impl Board {
             let west_promotion = west & mask_promotion;
 
             for to in push_promotion {
-                Self::push_promotion_moves(list, Square::from_raw((to as i32 - offset_north) as u8), to);
+                Self::push_promotion_moves(list, to.shift(!north).unwrap(), to);
             }
 
             for to in east_promotion {
-                Self::push_promotion_moves(list, Square::from_raw((to as i32 - offset_north_east) as u8), to);
+                Self::push_promotion_moves(list, to.shift(!north_east).unwrap(), to);
             }
 
             for to in west_promotion {
-                Self::push_promotion_moves(list, Square::from_raw((to as i32 - offset_north_west) as u8), to);
+                Self::push_promotion_moves(list, to.shift(!north_west).unwrap(), to);
             }
         }
 
@@ -151,21 +136,21 @@ impl Board {
 
         if K::QUIET {
             for to in push {
-                list.push(Move::new(Square::from_raw((to as i32 - offset_north) as u8), to, MoveKind::Normal));
+                list.push(Move::new(to.shift(!north).unwrap(), to, MoveKind::Normal));
             }
 
             for to in double_push {
-                list.push(Move::new(Square::from_raw((to as i32 - offset_north * 2) as u8), to, MoveKind::Normal));
+                list.push(Move::new(to.shift(!north).unwrap().shift(!north).unwrap(), to, MoveKind::Normal));
             }
         }
 
         if K::NOISY {
             for to in east {
-                list.push(Move::new(Square::from_raw((to as i32 - offset_north_east) as u8), to, MoveKind::Normal));
+                list.push(Move::new(to.shift(!north_east).unwrap(), to, MoveKind::Normal));
             }
 
             for to in west {
-                list.push(Move::new(Square::from_raw((to as i32 - offset_north_west) as u8), to, MoveKind::Normal));
+                list.push(Move::new(to.shift(!north_west).unwrap(), to, MoveKind::Normal));
             }
 
             if let Some(enpassant) = self.state.enpassant() {

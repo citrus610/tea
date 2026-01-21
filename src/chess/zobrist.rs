@@ -13,7 +13,7 @@ const fn rand64(mut seed: u64) -> u64 {
     seed.wrapping_mul(2685821657736338717)
 }
 
-pub const ZOBRIST: Zobrist = {
+pub static ZOBRIST: Zobrist = {
     let mut zobrist = Zobrist {
         piece: [[0; 64]; 12],
         enpassant: [0; 8],
@@ -49,7 +49,7 @@ pub const ZOBRIST: Zobrist = {
         file += 1;
     }
 
-    // Enpassant
+    // Castling
     let mut castle = 0;
 
     while castle < 16 {

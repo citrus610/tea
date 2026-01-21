@@ -119,16 +119,16 @@ impl State {
     }
 
     pub fn place(&mut self, square: Square, piece: Piece) {
-        self.pieces[piece.kind()] |= Bitboard::from_square(square);
-        self.colors[piece.color()] |= Bitboard::from_square(square);
+        self.pieces[piece.kind()].set(square);
+        self.colors[piece.color()].set(square);
         self.mailbox[square] = Some(piece);
         self.keys.main ^= ZOBRIST.piece[piece][square];
     }
 
     pub fn remove(&mut self, square: Square) {
         if let Some(piece) = self.mailbox[square] {
-            self.pieces[piece.kind()] &= !Bitboard::from_square(square);
-            self.colors[piece.color()] &= !Bitboard::from_square(square);
+            self.pieces[piece.kind()].clear(square);
+            self.colors[piece.color()].clear(square);
             self.mailbox[square] = None;
             self.keys.main ^= ZOBRIST.piece[piece][square];
         }
@@ -251,8 +251,8 @@ impl Board {
         let moving = self.state.at(from).unwrap();
 
         // Remove enpassant square
-        if self.state.enpassant.is_some() {
-            self.state.keys.main ^= ZOBRIST.enpassant[self.state.enpassant.unwrap().file()];
+        if let Some(enpassant) = self.state.enpassant {
+            self.state.keys.main ^= ZOBRIST.enpassant[enpassant.file()];
             self.state.enpassant = None;
         }
 
@@ -270,7 +270,7 @@ impl Board {
             self.state.halfmove = 0;
 
             if from.rank().distance(to.rank()) == 2 {
-                self.state.enpassant = Some(Square::from_raw(to.value() ^ 8));
+                self.state.enpassant = Some(to.enpassant());
                 self.state.keys.main ^= ZOBRIST.enpassant[to.file()];
             }
         }
@@ -317,7 +317,7 @@ impl Board {
         }
 
         if mv.is_enpassant() {
-            self.state.remove(Square::from_raw(to.value() ^ 8));
+            self.state.remove(to.enpassant());
         }
 
         // Flip side to move
@@ -372,7 +372,121 @@ impl Board {
     }
 
     pub fn is_pseudo_legal(&self, mv: Move) -> bool {
-        mv.is_some()
+        if mv.is_null() {
+            return false;
+        }
+
+        let occupied = self.state.occupied();
+        let from = mv.from();
+        let to = mv.to();
+
+        let moving = match self.state.at(from) {
+            Some(piece) => piece,
+            None => return false
+        };
+
+        if self.state.colors(self.color).is_set(to) {
+            return false;
+        }
+        
+        if self.state.checkers().is_many() {
+            return mv.is_normal() && moving.kind() == PieceKind::King && king_attacks(from).is_set(to);
+        }
+
+        if mv.is_castling() {
+            let castle = match to {
+                Square::G1 => CastleKind::WhiteShort,
+                Square::C1 => CastleKind::WhiteLong,
+                Square::G8 => CastleKind::BlackShort,
+                Square::C8 => CastleKind::BlackLong,
+                _ => return false
+            };
+
+            if self.state.checkers().is_some() {
+                return false;
+            }
+
+            if !self.state.castles().is_allowed(castle) {
+                return false;
+            }
+
+            if (Bitboard::from_between(from, to) & occupied).is_some() {
+                return false;
+            }
+
+            return true;
+        }
+
+        if mv.is_enpassant() {
+            if moving.kind() != PieceKind::Pawn {
+                return false;
+            }
+
+            if !pawn_attacks(from, self.color).is_set(to) {
+                return false;
+            }
+
+            match self.state.enpassant() {
+                Some(square) => return to == square,
+                None => return false
+            }
+        }
+
+        if mv.is_promotion() && moving.kind() != PieceKind::Pawn {
+            return false;
+        }
+
+        if moving.kind() == PieceKind::King {
+            return king_attacks(from).is_set(to);
+        }
+
+        if self.state.checkers().is_some() {
+            let king_square = self.state.king_square(self.color);
+            let checker_square = self.state.checkers().lsb();
+            let betweens = Bitboard::from_between(king_square, checker_square) | self.state.checkers();
+
+            if !betweens.is_set(to) {
+                return false;
+            }
+        }
+
+        if moving.kind() == PieceKind::Pawn {
+            let north = match self.color {
+                Color::White => Direction::North,
+                Color::Black => Direction::South
+            };
+
+            let push_mask = match self.color {
+                Color::White => Bitboard::from_rank(Rank::Third),
+                Color::Black => Bitboard::from_rank(Rank::Sixth)
+            };
+
+            let push = Bitboard::from_square(from).shift(north) & !occupied;
+            let double_push = (push & push_mask).shift(north) & !occupied;
+            let capture = pawn_attacks(from, self.color) & self.state.colors(!self.color);
+
+            let mut span = push | double_push | capture;
+
+            if mv.is_promotion() {
+                span &= Bitboard::from_rank(Rank::First) | Bitboard::from_rank(Rank::Eighth);
+            }
+
+            return span.is_set(to);
+        }
+
+        if self.state.blockers(self.color).is_set(from) && !Bitboard::from_line(from, to).is_set(self.state.king_square(self.color)) {
+            return false;
+        }
+
+        let attacks = match moving.kind() {
+            PieceKind::Knight => knight_attacks(from),
+            PieceKind::Bishop => bishop_attacks(from, occupied),
+            PieceKind::Rook => rook_attacks(from, occupied),
+            PieceKind::Queen => bishop_attacks(from, occupied) | rook_attacks(from, occupied),
+            _ => Bitboard::new()
+        };
+
+        return attacks.is_set(to);
     }
 
     pub fn is_legal(&self, mv: Move) -> bool {
@@ -402,9 +516,15 @@ impl Board {
             if self.state.enpassant().is_some() {
                 let mut occupied = self.state.occupied();
 
-                occupied ^= Bitboard::from_square(from);
-                occupied ^= Bitboard::from_square(to);
-                occupied ^= Bitboard::from_square(to).shift(if self.color == Color::White { Direction::South } else { Direction::North });
+                occupied.clear(from);
+                occupied.set(to);
+
+                occupied ^= Bitboard::from_square(to).shift(
+                    match self.color {
+                        Color::White => Direction::South,
+                        Color::Black => Direction::North
+                    }
+                );
 
                 let king_square = self.state.king_square(self.color);
                 let bishops = self.state.pieces(PieceKind::Bishop) | self.state.pieces(PieceKind::Queen);
@@ -419,9 +539,15 @@ impl Board {
             }
         }
 
-        return
-            (self.state.blockers(self.color) & Bitboard::from_square(from)).is_empty() ||
-            (Bitboard::from_line(from, to) & self.state.pieces(PieceKind::King) & self.state.colors(self.color)).is_some();
+        if !self.state.blockers(self.color).is_set(from) {
+            return true;
+        }
+
+        if (Bitboard::from_line(from, to) & self.state.pieces(PieceKind::King) & self.state.colors(self.color)).is_some() {
+            return true;
+        }
+
+        false
     }
 }
 

@@ -4,6 +4,7 @@ use std::time::Instant;
 use crate::chess::{board::Board, movegen::perft};
 
 mod chess;
+mod engine;
 
 fn main() {
     let mut board = Board::startpos().unwrap();

@@ -28,9 +28,17 @@ impl Rank {
 
     #[inline(always)]
     pub const fn from_raw(value: u8) -> Self {
-        debug_assert!(value < Self::COUNT as u8);
-
-        unsafe { std::mem::transmute(value) }
+        match value {
+            0 => Rank::First,
+            1 => Rank::Second,
+            2 => Rank::Third,
+            3 => Rank::Fourth,
+            4 => Rank::Fifth,
+            5 => Rank::Sixth,
+            6 => Rank::Seventh,
+            7 => Rank::Eighth,
+            _ => panic!("invalid index!")
+        }
     }
 
     #[inline(always)]

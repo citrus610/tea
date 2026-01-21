@@ -43,9 +43,15 @@ impl PieceKind {
 
     #[inline(always)]
     pub const fn from_raw(value: u8) -> Self {
-        debug_assert!(value < Self::COUNT as u8);
-
-        unsafe { std::mem::transmute(value) }
+        match value {
+            0 => PieceKind::Pawn,
+            1 => PieceKind::Knight,
+            2 => PieceKind::Bishop,
+            3 => PieceKind::Rook,
+            4 => PieceKind::Queen,
+            5 => PieceKind::King,
+            _ => panic!("invalid index!")
+        }
     }
 }
 
@@ -91,9 +97,25 @@ impl Piece {
 
     #[inline(always)]
     pub const fn from_raw(value: u8) -> Self {
-        debug_assert!(value < Self::COUNT as u8);
+        match value {
+            0 => Piece::WhitePawn,
+            1 => Piece::BlackPawn,
+            2 => Piece::WhiteKnight,
+            3 => Piece::BlackKnight,
+            4 => Piece::WhiteBishop,
+            5 => Piece::BlackBishop,
+            6 => Piece::WhiteRook,
+            7 => Piece::BlackRook,
+            8 => Piece::WhiteQueen,
+            9 => Piece::BlackQueen,
+            10 => Piece::WhiteKing,
+            11 => Piece::BlackKing,
+            _ => panic!("invalid index!")
+        }
 
-        unsafe { std::mem::transmute(value) }
+        // debug_assert!(value < Self::COUNT as u8);
+
+        // unsafe { std::mem::transmute(value) }
     }
 
     #[inline(always)]

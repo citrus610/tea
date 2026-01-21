@@ -75,15 +75,28 @@ impl Square {
     }
 
     #[inline(always)]
-    pub const fn shift(self, direction: Direction) -> Option<Self> {
-        let file_new = self.file() as i8 + direction.offset().0;
-        let rank_new = self.rank() as i8 + direction.offset().1;
+    pub const fn enpassant(self) -> Self {
+        Self::from_raw(self.value() ^ 8)
+    }
 
-        if rank_new < 0 || file_new < 0 || rank_new >= Rank::COUNT as i8 || file_new >= File::COUNT as i8 {
+    #[inline(always)]
+    pub const fn shift(self, direction: Direction) -> Option<Self> {
+        let square = self.value() as i32 + match direction {
+            Direction::North => 8,
+            Direction::South => -8,
+            Direction::East => 1,
+            Direction::West => -1,
+            Direction::NorthEast => 9,
+            Direction::NorthWest => 7,
+            Direction::SouthEast => -7,
+            Direction::SouthWest => -9,
+        };
+
+        if square < 0 || square >= Self::COUNT as i32 {
             return None;
         }
 
-        Some(Self::new(Rank::from_raw(rank_new as u8), File::from_raw(file_new as u8)))
+        Some(Self::from_raw(square as u8))
     }
 
     #[inline(always)]
